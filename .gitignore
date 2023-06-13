@@ -147,3 +147,6 @@ figures/*tif
 
 # Ignore the backups
 backups*
+
+# Ignore vscode things
+**.DS_Store
