@@ -50,7 +50,7 @@ def summarize(votes, abstained):
 # comment the click commands for testing
 @click.command()
 @click.option('--exp_name', type=str, required=True, help="name of the experiment")
-@click.option('--n', type=int, required=True, help="number of voters")
+@click.option('--N', type=int, required=True, help="number of voters")
 @click.option('--iterations', type=int, required=True, help="rounds of voting")
 @click.option('--prob', type=float, required=True, help="probability of no voting")
 @click.option('--seed', type=int, required=True, help="the seed for the random number generator")
