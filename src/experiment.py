@@ -14,7 +14,7 @@ def convert_to_native(obj):
         return obj
 
 # let the N people vote each other at random. with probability prob, a person does not vote
-def compute(N, prob, rng, i):
+def compute(N, prob, rng):
     
     votes = np.zeros(N, dtype=int)
     abstained = 0
@@ -84,7 +84,7 @@ def experiment(exp_name, n, iterations, prob, seed, output_dir):
     print('Computing...')
     for i in range(iterations):
         # perform computation
-        votes, abstained = compute(N, prob, rng, i)
+        votes, abstained = compute(N, prob, rng)
 
         # summarize the quantities of interest
         winner, winner_votes, diff, votes_zeroone = summarize(votes, abstained)
@@ -102,7 +102,7 @@ def experiment(exp_name, n, iterations, prob, seed, output_dir):
         'winner_votes' : winner_votes_results.tolist(),
         'diff' : diff_results.tolist(),
         'abstained' : abstained_results.tolist(),
-        'votes_zeroone' : votes_zeroone_results.tolist()
+        'votes_zeroone' : votes_zeroone_results.T.tolist()  # this is to match with the julia json output (prints per column)
     }
 
     # perform some aggregation
