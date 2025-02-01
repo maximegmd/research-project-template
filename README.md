@@ -4,12 +4,31 @@ This repository serves as a template for research projects.
 
 ## Dependencies
 
+### python
 All the experiments were performed using Python 3.9. In order to create a virtual environment and install the project dependencies you can run the following commands:
+
+*The current `requirements.txt` contains commonly used packages. Remember to run `pip freeze > requirements.txt` before publishing the project.*
 
 ```bash
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
+```
+
+### julia
+All the experiments were performed using Julia 1.11.3. In order to create a project and install its dependencies you can open the Julua REPL (by running `julia`) and run the following commands:
+
+*The current `Project.toml` contains commonly used packages. Remember to also commit `Manifest.toml` before publishing the project.*
+
+```julia
+using Pkg
+Pkg.activate(".")
+Pkg.instantiate()
+```
+or equivalently
+```julia
+] activate .
+] instantiate
 ```
 
 ## Code organization
