@@ -121,7 +121,7 @@ def experiment(exp_name, n, iterations, prob, seed, output_dir):
 
     print('Saving results...')
     # select which parameters will go into the filename and set their short names
-    short_names = {'N' : 'N', 'prob' : 'p'}
+    short_names = {'N' : 'N', 'prob' : 'p', 'seed' : 's'}
     filename = f'{exp_name}_' + '_'.join([f'{value}|{summary["parameters"][key]}' for key, value in short_names.items()]) + '_.json'
     with open(f'{output_dir}/{filename}', 'w') as f:
         json.dump(summary, f)
