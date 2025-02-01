@@ -1,12 +1,19 @@
 #!/bin/bash
 
-N_seq=(10 100 1000)
-seeds=10
-njobs=5
+source env/bin/activate
 
-# Loop
-for i in {0..2}
+exp_name="test"
+n_seq=(10 20)
+iterations=10
+prob_seq=(0.1 0.5)
+seed=42
+output_dir="outputs"
+
+# loop over configurations
+for n in "${n_seq[@]}"
 do
-    N=${N_seq[$i]}
-    python -m src.experiment --output=outputs/experiment_N_${N} --n=$N --seeds=$seeds --njobs=$njobs
+    for prob in "${prob_seq[@]}"
+    do
+        python src/experiment.py --exp_name=$exp_name --n=$n --iterations=$iterations --prob=$prob --seed=$seed --output_dir=$output_dir
+    done
 done
