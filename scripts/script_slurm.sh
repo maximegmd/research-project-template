@@ -11,3 +11,11 @@ source env/bin/activate
 
 # run python script
 python -m src.experiment --output=outputs/experiment_N_${N} --n=$N --seeds=$seeds --njobs=$njobs
+
+# increase N by 1
+N=$((N+1))
+
+# run julia script
+julia --project=. src/experiment.jl --exp_name=$exp_name --N=$N --iterations=$iterations --prob=$prob --seed=$seed --output_dir=$output_dir
+
+deactivate
