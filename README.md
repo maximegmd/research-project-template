@@ -76,6 +76,8 @@ or equivalently
 
 ## Contact & attribution
 
+In case you have questions about the code, you identify potential bugs or you would like us to include additional functionalities, feel free to open an issue or contact [ADD NAME HERE].
+
 If you use parts of the code in this repository for your own research, please consider citing:
 
     <!-- Insert BibTex here -->
