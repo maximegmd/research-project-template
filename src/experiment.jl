@@ -144,7 +144,7 @@ function experiment(args)
     # select which parameters will go into the filename and set their short names
     short_names = Dict("N" => "N", "prob" => "p", "seed" => "s")
     filename = string(exp_name, "_",
-                      join([string(short_names[k], "|", summary["parameters"][k]) for k in keys(short_names)], "_"),
+                      join([string(short_names[k], "=", summary["parameters"][k]) for k in keys(short_names)], "_"),
                       "_.json")
     open(joinpath(output_dir, filename), "w") do f
         write(f, JSON.json(summary))
