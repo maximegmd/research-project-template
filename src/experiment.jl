@@ -35,17 +35,26 @@ function experiment(args)
 
     # comment out the parsing for testing and set the arguments manually
     # exp_name = "test"
+    # output_dir = "outputs"
+    # vars = "N,prob,seed"
     # N = 10
     # iterations = 10
     # prob = 0.5
     # seed = 42
-    # output_dir = "outputs"
 
     # parse the command line arguments
     s = ArgParseSettings()
     @add_arg_table! s begin
         "--exp_name"
             help="Name of the experiment"
+            required=true
+            arg_type=String
+        "--output_dir"
+            help="Output directory"
+            required=true
+            arg_type=String
+        "--vars"
+            help="Variable parameters (e.g. 'N,prob,seed')"
             required=true
             arg_type=String
         "--N"
@@ -58,26 +67,25 @@ function experiment(args)
             arg_type=Int
         "--prob"
             help="Probability of abstaining"
-            required=true
+            required=false
+            default=0.1
             arg_type=Float64
         "--seed"
             help="Random seed"
-            required=true
+            required=false
+            default=42
             arg_type=Int
-        "--output_dir"
-            help="Output directory"
-            required=true
-            arg_type=String
     end
 
     # parse the arguments
     parsed_args = parse_args(args, s)
     exp_name = parsed_args["exp_name"]
+    output_dir = parsed_args["output_dir"]
+    vars = parsed_args["vars"]
     N = parsed_args["N"]
     iterations = parsed_args["iterations"]
     prob = parsed_args["prob"]
     seed = parsed_args["seed"]
-    output_dir = parsed_args["output_dir"]
 
     # make sure N>1
     if N < 2
@@ -141,11 +149,8 @@ function experiment(args)
     )
 
     println("Saving results...")
-    # select which parameters will go into the filename and set their short names
-    short_names = Dict("N" => "N", "prob" => "p", "seed" => "s")
-    filename = string(exp_name, "_",
-                      join([string(short_names[k], "=", summary["parameters"][k]) for k in keys(short_names)], "_"),
-                      "_.json")
+    # include the variable parameters into the filename
+    filename = string(exp_name, "_", join([string(k, "=", summary["parameters"][k]) for k in split(vars, ",")], "_"), "_.json")
     open(joinpath(output_dir, filename), "w") do f
         write(f, JSON.json(summary))
     end
