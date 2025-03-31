@@ -1,6 +1,7 @@
 import numpy as np
 import click
 import json
+import itertools
 
 # convert numpy types to native python types
 def convert_to_native(obj):
@@ -47,18 +48,44 @@ def summarize(votes, abstained):
 
     return winner, winner_votes, diff, votes_zeroone
 
+def read_params(config, index):
+
+    # load the config file
+    with open(config, "r") as f:
+        config_data = json.load(f)
+    
+    # separate fixed and variable parameters
+    fixed_params = {k: v for k, v in config_data.items() if not isinstance(v["values"], list)}
+    variable_params = {k: v for k, v in config_data.items() if isinstance(v["values"], list)}
+
+    # generate all combinations of variable parameters
+    param_combinations = list(itertools.product(*[v["values"] for v in variable_params.values()]))
+
+    # ensure index is within range
+    if index >= len(param_combinations):
+        raise ValueError(f"Index {index} is out of range. Only {len(param_combinations)} experiments available.")
+
+    # construct parameter set
+    experiment_params = {k: v["values"] for k, v in fixed_params.items()}  # copy fixed params
+    experiment_params.update({
+        k: param_combinations[index][i] for i, (k, v) in enumerate(variable_params.items())
+    })  # add selected combination for variable params
+    
+    # copy short names
+    short_names = {k: v["short"] for k, v in variable_params.items()}  
+
+    return experiment_params, short_names, fixed_params, variable_params
+
 # comment the click commands for testing
 @click.command()
-@click.option('--exp_name', type=str, required=True, help="name of the experiment")
-@click.option('--N', type=int, required=True, help="number of voters")
-@click.option('--iterations', type=int, required=True, help="rounds of voting")
-@click.option('--prob', type=float, required=True, help="probability of no voting")
-@click.option('--seed', type=int, required=True, help="the seed for the random number generator")
-@click.option('--output_dir', type=str, required=True, help="output directory")
-def experiment(exp_name, n, iterations, prob, seed, output_dir):
+@click.option('--config', type=str, required=True, help="path to config JSON file")
+@click.option('--index', type=int, required=True, help="index of the parameter set")
+def experiment(config, index):
 
-    N = n # click doesn't accept upper case arguments
-
+    # read the parameters from the config file
+    experiment_params, short_names, fixed_params, variable_params = read_params(config, index)
+    globals().update(experiment_params)
+    
     # make sure N>1
     if N < 2:
         raise ValueError('N must be greater than 1')
@@ -67,12 +94,7 @@ def experiment(exp_name, n, iterations, prob, seed, output_dir):
     rng = np.random.default_rng(seed=seed)
 
     summary = {}
-    summary['parameters'] = {
-        'N' : N,
-        'iterations' : iterations,
-        'prob' : prob,
-        'seed' : seed
-    }
+    summary['parameters'] = {**experiment_params}
 
     # initialize the results arrays
     winner_results = np.zeros(iterations, dtype=int)
@@ -120,9 +142,8 @@ def experiment(exp_name, n, iterations, prob, seed, output_dir):
     summary = convert_to_native(summary)
 
     print('Saving results...')
-    # select which parameters will go into the filename and set their short names
-    short_names = {'N' : 'N', 'prob' : 'p', 'seed' : 's'}
-    filename = f'{exp_name}_' + '_'.join([f'{value}={summary["parameters"][key]}' for key, value in short_names.items()]) + '_.json'
+    # include the variable parameters into the filename
+    filename = f'{exp_name}_' + '_'.join([f'{short_names[key]}={summary["parameters"][key]}' for key in variable_params.keys()]) + '_.json'
     with open(f'{output_dir}/{filename}', 'w') as f:
         json.dump(summary, f)
 
@@ -135,4 +156,4 @@ if __name__ == '__main__':
     # comment for testing
     experiment()
     # uncomment for testing
-    # experiment("test", 10, 10, 0.5, 42, "outputs")
+    # experiment('configs/experiment.json', 0)
