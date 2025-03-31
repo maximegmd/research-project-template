@@ -16,7 +16,7 @@ PARAM_COMBINATIONS=$(jq -r '
 
 # submit each combination with the corresponding index
 for INDEX in $(seq 0 $((PARAM_COMBINATIONS - 1))); do
-    sbatch --export=ALL,config_file=$CONFIG_FILE,index=$INDEX,lang=$LANG scripts/script_slurm.sh
+    sbatch --export=ALL,CONFIG_FILE=$CONFIG_FILE,INDEX=$INDEX,LANG=$LANG scripts/script_slurm.sh
 done
 
 deactivate
