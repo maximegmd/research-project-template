@@ -2,30 +2,26 @@
 
 source env/bin/activate
 
-exp_name="test"
-# N=10
-iterations=10
-# prob=0.5
-# seed=42
-output_dir="outputs"
+# set the path to the configuration file
+CONFIG_FILE="configs/experiment.json"
+
+# get the number of parameter combinations
+PARAM_COMBINATIONS=$(jq -r '
+  to_entries 
+  | map(select(.value.values | type == "array"))  # Only select parameters where "values" is an array
+  | map(.value.values | length)  # Get the length of each array
+  | reduce .[] as $item (1; . * $item)  # Multiply the lengths of all arrays to get the total number of combinations
+' $CONFIG_FILE)
+
+# loop over configurations
+for INDEX in $(seq 0 $((PARAM_COMBINATIONS - 1))); do
+    python src/experiment.py --config="$CONFIG_FILE" --index="$INDEX"
+done
 
 # individual run (python)
-# python src/experiment.py --exp_name=$exp_name --N=$N --iterations=$iterations --prob=$prob --seed=$seed --output_dir=$output_dir
+# python src/experiment.py --config="$CONFIG_FILE" --index=0
 
 # individual run (julia)
-# N=11
-# julia --project=. src/experiment.jl --exp_name=$exp_name --N=$N --iterations=$iterations --prob=$prob --seed=$seed --output_dir=$output_dir
-
-# loop over configurations (make sure that these are the same ones that appear in the output filenames specified in py/jl)
-N_seq=(10 20)
-prob_seq=(0.1 0.5)
-seed_seq=(1 2 3 4 5 6 7 8 9 10)
-for N in "${N_seq[@]}"; do
-    for prob in "${prob_seq[@]}"; do
-        for seed in "${seed_seq[@]}"; do
-            python src/experiment.py --exp_name=$exp_name --N=$N --iterations=$iterations --prob=$prob --seed=$seed --output_dir=$output_dir
-        done
-    done
-done
+# julia --project=. src/experiment.jl --config="$CONFIG_FILE" --index=0
 
 deactivate
