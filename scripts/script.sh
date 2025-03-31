@@ -2,9 +2,9 @@
 
 source env/bin/activate
 
-# set the path to the configuration file
-CONFIG_FILE="configs/experiment.json"
-LANG="python"  # Set the language to either "python" or "julia"
+LANG="python"  # set the language to either "python" or "julia"
+CONFIG_FILE="configs/experiment.json" # set the path to the configuration file
+SRC="experiment.py" # set the source file to be executed
 
 # get the number of parameter combinations
 PARAM_COMBINATIONS=$(jq -r '
@@ -16,7 +16,7 @@ PARAM_COMBINATIONS=$(jq -r '
 
 # loop over configurations
 for INDEX in $(seq 0 $((PARAM_COMBINATIONS - 1))); do
-    python src/executor.py --config="$CONFIG_FILE" --index="$INDEX" --lang="$LANG"
+  python src/executor.py --config="$CONFIG_FILE" --index="$INDEX" --lang="$LANG" --source="$SRC"
 done
 
 # individual run

@@ -8,7 +8,8 @@ import os
 @click.option('--config', type=str, required=True, help="path to config JSON file")
 @click.option('--index', type=int, required=True, help="index of the parameter set")
 @click.option('--lang', type=str, default='python', help="language to use for the experiment")
-def experiment(config, index, lang):
+@click.option('--source', type=str, default='experiment.py', help="name of the source file")
+def experiment(config, index, lang, source):
 
     # load the config file
     with open(config, "r") as f:
@@ -32,7 +33,7 @@ def experiment(config, index, lang):
     })  # add selected combination for variable params
 
     # create args string
-    args = ' '.join([f'--{k} {v}' for k, v in experiment_params.items()])
+    args = ' '.join([f'--{k} "{v}"' for k, v in experiment_params.items()])
     # check that the lang is either python or julia
     if lang not in ['python', 'julia']:
         raise ValueError(f"Language {lang} is not supported. Supported languages are python and julia.")
@@ -41,13 +42,8 @@ def experiment(config, index, lang):
     variable_param_names = ','.join(variable_params.keys())
     args += f' --vars {variable_param_names}'
     
-    # create the command
-    if lang == 'python':
-        command = f'python src/experiment.py {args}'
-    elif lang == 'julia':
-        command = f'julia --project=. src/experiment.jl {args}'
-
-    # run the command
+    # create and run the command
+    command = f'{lang} src/{source} {args}'
     os.system(command)
 
     return
