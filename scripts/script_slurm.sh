@@ -8,14 +8,11 @@
 #SBATCH -e outputs/slurm_logs/simulation_%j.err      # File to which STDERR will be written
 
 # print the experiment configuration
-echo "Running job $SLURM_JOB_ID with config: $CONFIG_FILE, index: $INDEX"
+echo "Running job $SLURM_JOB_ID with config: $CONFIG_FILE, index: $INDEX, language: $LANG"
 
 source env/bin/activate
 
-# run python script
-python src/experiment.py --config="$CONFIG_FILE" --index="$INDEX"
-
-# run julia script
-# julia --project=. src/experiment.jl --config="$CONFIG_FILE" --index="$INDEX"
+# run main experiment script
+python src/executor.py --config="$CONFIG_FILE" --index="$INDEX" --lang="$LANG"
 
 deactivate
