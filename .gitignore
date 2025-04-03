@@ -138,7 +138,7 @@ dmypy.json
 cython_debug/
 
 # Ignore the outputs
-outputs/*json
+outputs/**/*json
 outputs/slurm_logs/*out
 outputs/slurm_logs/*err
 
@@ -149,6 +149,10 @@ figures/*tif
 
 # Ignore the backups
 backups*
+
+# Ignore the data
+data/**/*json
+data/**/*csv
 
 # Ignore vscode things
 **.DS_Store
