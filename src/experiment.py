@@ -124,7 +124,7 @@ def experiment(exp_name, output_dir, vars, n, iterations, prob, seed):
 
     print('Saving results...')
     # include the variable parameters into the filename
-    filename = f'{exp_name}__' + '__'.join([f'{key}={summary["parameters"][key]}' for key in vars.split(',')]) + '__.json'
+    filename = f'{exp_name}__' + '__'.join([f'{key}={summary["parameters"][key]}' for key in vars.split(',')]) + '.json'
     with open(f'{output_dir}/{filename}', 'w') as f:
         json.dump(summary, f)
 
