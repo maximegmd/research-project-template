@@ -150,7 +150,7 @@ function experiment(args)
 
     println("Saving results...")
     # include the variable parameters into the filename
-    filename = string(exp_name, "_", join([string(k, "=", summary["parameters"][k]) for k in split(vars, ",")], "_"), "_.json")
+    filename = string(exp_name, "__", join([string(k, "=", summary["parameters"][k]) for k in split(vars, ",")], "__"), "__.json")
     open(joinpath(output_dir, filename), "w") do f
         write(f, JSON.json(summary))
     end
