@@ -4,7 +4,6 @@
         "master_seed": "Seed for reproducibility",
         "num_seeds": "0 = use master_seed directly; N > 0 = derive N seeds from master_seed"
     },
-    "exp_name": "experiment",
     "master_seed": 42,
     "num_seeds": 0,
     "iterations": 10,

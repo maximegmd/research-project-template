@@ -108,10 +108,9 @@ To run all parameter combinations locally:
 By default, this runs `configs/experiment.json` using Python.
 
 **Options:**
-- `-n, --name NAME` — Experiment name (default: `experiment`). It tells the executor to look for the config `configs/NAME.json` and the Python/Julia script called `src/NAME.{py,jl}`
+- `-n, --name NAME` — Experiment name (required). It tells the executor to look for the config `configs/NAME.json` and the Python/Julia script called `src/NAME.{py,jl}`
 - `-l, --lang LANG` — Language: `python` or `julia` (default: `python`)
 - `-h, --help` — Show help message
-- `-c, --config FILE` — Direct path to config file (overrides derived path) --- this is obsolete and should be removed
 
 **Examples:**
 ```bash

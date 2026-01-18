@@ -14,10 +14,11 @@ def is_reserved(key):
 # comment the click commands for testing
 @click.command()
 @click.option('--config', type=str, required=True, help="path to config JSON file")
+@click.option('--name', type=str, required=True, help="experiment name")
 @click.option('--index', type=int, required=True, help="index of the parameter set")
 @click.option('--lang', type=str, default='python', help="language to use for the experiment")
 @click.option('--source', type=str, default='experiment.py', help="name of the source file")
-def experiment(config, index, lang, source):
+def experiment(config, name, index, lang, source):
 
     # load the config file
     with open(config, "r") as f:
@@ -40,8 +41,11 @@ def experiment(config, index, lang, source):
         k: param_combinations[index][i] for i, (k, v) in enumerate(variable_params.items())
     })  # add selected combination for variable params
 
+    # inject exp_name from CLI argument
+    experiment_params['exp_name'] = name
+
     # auto-generate filename from variable params
-    exp_name = experiment_params.get('exp_name', 'experiment')
+    exp_name = name
     var_parts = [f"{k}={experiment_params[k]}" for k in variable_params.keys()]
     output_filename = f"{exp_name}__{'__'.join(var_parts)}.json"
 

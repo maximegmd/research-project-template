@@ -5,29 +5,27 @@ set -e
 
 show_help() {
     cat << 'EOF'
-Usage: submit_slurm.sh [OPTIONS]
+Usage: submit_slurm.sh -n NAME [OPTIONS]
 
 Submit experiments as a SLURM array job.
 
 Options:
-  -n, --name NAME       Experiment name (default: experiment)
+  -n, --name NAME       Experiment name (required)
                         Config file is derived as configs/NAME.json
   -l, --lang LANG       Language: python or julia (default: python)
-  -c, --config FILE     Config file path (overrides derived path)
   -d, --dry-run         Show sbatch command without executing
   -h, --help            Show this help message
 
 Environment variables:
-  NAME, EXPERIMENT_LANG, CONFIG_FILE are also supported.
+  NAME, EXPERIMENT_LANG are also supported.
   Command-line arguments take precedence over environment variables.
 
 SLURM settings are read from the 'slurm' section of the config file.
 
 Examples:
-  submit_slurm.sh                         # Submit with defaults
-  submit_slurm.sh -n my_experiment        # Different experiment
+  submit_slurm.sh -n experiment           # Submit experiment
   submit_slurm.sh -n my_exp -l julia      # Julia experiment
-  submit_slurm.sh --dry-run               # Preview command
+  submit_slurm.sh -n experiment --dry-run # Preview command
 EOF
 }
 
@@ -52,14 +50,6 @@ while [[ $# -gt 0 ]]; do
             ARG_LANG="${1#*=}"
             shift
             ;;
-        -c|--config)
-            ARG_CONFIG="$2"
-            shift 2
-            ;;
-        --config=*)
-            ARG_CONFIG="${1#*=}"
-            shift
-            ;;
         -d|--dry-run)
             DRY_RUN=true
             shift
@@ -81,12 +71,21 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Apply priority: CLI args > env vars
+NAME="${ARG_NAME:-$NAME}"
+
+# Validate required --name argument
+if [ -z "$NAME" ]; then
+    echo "Error: --name is required" >&2
+    echo "Try 'submit_slurm.sh --help' for more information." >&2
+    exit 2
+fi
+
 source env/bin/activate
 
-# Apply priority: CLI args > env vars > defaults
+# Set configuration variables
 EXPERIMENT_LANG="${ARG_LANG:-${EXPERIMENT_LANG:-python}}"
-NAME="${ARG_NAME:-${NAME:-experiment}}"
-CONFIG_FILE="${ARG_CONFIG:-${CONFIG_FILE:-configs/${NAME}.json}}"
+CONFIG_FILE="configs/${NAME}.json"
 
 # Validate language
 if [[ ! "$EXPERIMENT_LANG" =~ ^(python|julia)$ ]]; then
@@ -143,7 +142,7 @@ SBATCH_CMD+=" --error=$SLURM_LOG_DIR/%A_%a.err"
 [ -n "$SLURM_CONSTRAINT" ] && SBATCH_CMD+=" --constraint=$SLURM_CONSTRAINT"
 [ -n "$SLURM_EXCLUDE" ] && SBATCH_CMD+=" --exclude=$SLURM_EXCLUDE"
 
-SBATCH_CMD+=" --export=ALL,CONFIG_FILE=$CONFIG_FILE,EXPERIMENT_LANG=$EXPERIMENT_LANG,NAME=$NAME"
+SBATCH_CMD+=" --export=ALL,EXPERIMENT_LANG=$EXPERIMENT_LANG,NAME=$NAME"
 SBATCH_CMD+=" scripts/run.sh"
 
 echo "Submitting $PARAM_COMBINATIONS jobs..."
