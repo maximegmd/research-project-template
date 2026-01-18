@@ -143,6 +143,7 @@ To submit experiments as a SLURM array job:
 ```bash
 # Preview what would be submitted
 ./scripts/submit_slurm.sh -n experiment --dry-run
+# 💡 This is particularly useful if you do not have permission to execute bash scripts on the login node of your SLURM cluster. Simply run this command locally and copy-paste the resulting sbatch command.
 
 # Submit Julia experiment
 ./scripts/submit_slurm.sh -n experiment -l julia
