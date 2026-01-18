@@ -2,6 +2,14 @@ import click
 import json
 import itertools
 import os
+import subprocess
+
+# Reserved keys (not experiment parameters)
+# Keys starting with '_' are also excluded (used for comments/metadata)
+RESERVED_KEYS = {'slurm'}
+
+def is_reserved(key):
+    return key in RESERVED_KEYS or key.startswith('_')
 
 # comment the click commands for testing
 @click.command()
@@ -14,10 +22,10 @@ def experiment(config, index, lang, source):
     # load the config file
     with open(config, "r") as f:
         config_data = json.load(f)
-    
-    # separate fixed and variable parameters
-    fixed_params = {k: v for k, v in config_data.items() if not isinstance(v, list)}
-    variable_params = {k: v for k, v in config_data.items() if isinstance(v, list)}
+
+    # separate fixed and variable parameters (excluding reserved keys)
+    fixed_params = {k: v for k, v in config_data.items() if not isinstance(v, list) and not is_reserved(k)}
+    variable_params = {k: v for k, v in config_data.items() if isinstance(v, list) and not is_reserved(k)}
 
     # generate all combinations of variable parameters
     param_combinations = list(itertools.product(*[v for v in variable_params.values()]))
@@ -32,19 +40,43 @@ def experiment(config, index, lang, source):
         k: param_combinations[index][i] for i, (k, v) in enumerate(variable_params.items())
     })  # add selected combination for variable params
 
+    # auto-generate filename from variable params
+    exp_name = experiment_params.get('exp_name', 'experiment')
+    var_parts = [f"{k}={experiment_params[k]}" for k in variable_params.keys()]
+    output_filename = f"{exp_name}__{'__'.join(var_parts)}.json"
+
     # create args string
     args = ' '.join([f'--{k} "{v}"' for k, v in experiment_params.items()])
     # check that the lang is either python or julia
     if lang not in ['python', 'julia']:
         raise ValueError(f"Language {lang} is not supported. Supported languages are python and julia.")
 
-    # pass the names of the variable parameters to the command
-    variable_param_names = ','.join(variable_params.keys())
-    args += f' --vars {variable_param_names}'
-    
-    # create and run the command
-    command = f'{lang} src/{source} {args}'
-    os.system(command)
+    # pass the output filename to the command
+    args += f' --output_filename "{output_filename}"'
+
+    # create the command
+    if lang == 'python':
+        command = f'python src/{source} {args}'
+    elif lang == 'julia':
+        command = f'julia --project=. src/{source} {args}'
+
+    # create log directory
+    log_dir = experiment_params.get('output_dir', 'outputs') + '/logs'
+    os.makedirs(log_dir, exist_ok=True)
+
+    # log files named to match JSON output
+    log_base = output_filename.replace('.json', '')
+    stdout_path = f"{log_dir}/{log_base}.out"
+    stderr_path = f"{log_dir}/{log_base}.err"
+
+    # run with output redirection
+    with open(stdout_path, 'w') as stdout_file, open(stderr_path, 'w') as stderr_file:
+        result = subprocess.run(
+            command,
+            shell=True,
+            stdout=stdout_file,
+            stderr=stderr_file
+        )
 
     return
 

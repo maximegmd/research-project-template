@@ -1,7 +1,6 @@
 import numpy as np
 import click
 import json
-import itertools
 
 # convert numpy types to native python types
 def convert_to_native(obj):
@@ -16,7 +15,7 @@ def convert_to_native(obj):
 
 # let the N people vote each other at random. with probability prob, a person does not vote
 def compute(N, prob, rng):
-    
+
     votes = np.zeros(N, dtype=int)
     abstained = 0
     for i in range(N):
@@ -32,101 +31,86 @@ def compute(N, prob, rng):
 
     return votes, abstained
 
-# summarize the votes and abstained votes
-def summarize(votes, abstained):
-    
-    # find the person with the most votes
-    winner = np.argmax(votes)
-    # find the number of votes the winner received
-    winner_votes = votes[winner]
-    # find the differnce between the number of votes of the winner and the second place
-    runner_up = np.argsort(votes)[-2]
-    runner_up_votes = votes[runner_up]
-    diff = winner_votes - runner_up_votes
-    # find the votes of voters 0 and 1
-    votes_zeroone = votes[:2]
-
-    return winner, winner_votes, diff, votes_zeroone
-
-
-# comment the click commands for testing
-@click.command()
-@click.option('--exp_name', type=str, required=True, help="name of the experiment")
-@click.option('--output_dir', type=str, required=True, help="output directory")
-@click.option('--vars', type=str, required=True, help="variable parameters (e.g. 'N,prob,seed')")
-@click.option('--N', type=int, required=True, help="number of voters")
-@click.option('--iterations', type=int, required=True, help="rounds of voting")
-@click.option('--prob', type=float, default=0.1, help="probability of abstaining")
-@click.option('--seed', type=int, default=42, help="the seed for the random number generator")
-def experiment(exp_name, output_dir, vars, n, iterations, prob, seed):
-
-    N = n # click doesn't accept upper case arguments
-    
-    # make sure N>1
-    if N < 2:
-        raise ValueError('N must be greater than 1')
-
-    # initialize the random number generator
-    rng = np.random.default_rng(seed=seed)
-
-    summary = {}
-    summary['parameters'] = {
-        'N' : N,
-        'iterations' : iterations,
-        'prob' : prob,
-        'seed' : seed
-    }
+# run the experiment for a single seed
+def single_seed_experiment(rng, N, iterations, prob):
 
     # initialize the results arrays
-    winner_results = np.zeros(iterations, dtype=int)
-    winner_votes_results = np.zeros(iterations, dtype=int)
-    diff_results = np.zeros(iterations, dtype=int)
     abstained_results = np.zeros(iterations, dtype=int)
-    votes_zeroone_results = np.zeros((iterations, 2), dtype=int)
+    winner_results = np.zeros(iterations, dtype=int)
 
     print('Computing...')
     for i in range(iterations):
         # perform computation
         votes, abstained = compute(N, prob, rng)
 
-        # summarize the quantities of interest
-        winner, winner_votes, diff, votes_zeroone = summarize(votes, abstained)
-
         # save the results
-        winner_results[i] = winner
-        winner_votes_results[i] = winner_votes
-        diff_results[i] = diff
         abstained_results[i] = abstained
-        votes_zeroone_results[i] = votes_zeroone
+        winner_results[i] = np.argmax(votes)
 
-    # save the results of all iterations
-    summary['iteration_results'] = {
-        'winner' : winner_results.tolist(),
-        'winner_votes' : winner_votes_results.tolist(),
-        'diff' : diff_results.tolist(),
-        'abstained' : abstained_results.tolist(),
-        'votes_zeroone' : votes_zeroone_results.T.tolist()  # this is to match with the julia json output (prints per column)
-    }
-
-    # perform some aggregation
+    # perform aggregation
     avg_num_abstained = np.mean(abstained_results)
     most_common_winner = np.argmax(np.bincount(winner_results))
 
-    # save the aggregated results
-    summary['total_results'] = {
-        'avg_num_abstained' : avg_num_abstained,
-        'most_common_winner' : most_common_winner
+    return {
+        'avg_num_abstained': avg_num_abstained,
+        'most_common_winner': most_common_winner
+    }
+
+
+# comment the click commands for testing
+@click.command()
+@click.option('--exp_name', type=str, required=True, help="name of the experiment")
+@click.option('--output_dir', type=str, required=True, help="output directory")
+@click.option('--output_filename', type=str, required=True, help="output filename")
+@click.option('--N', type=int, required=True, help="number of voters")
+@click.option('--iterations', type=int, required=True, help="rounds of voting")
+@click.option('--prob', type=float, default=0.1, help="probability of abstaining")
+@click.option('--master_seed', type=int, default=42, help="the master seed for generating seeds")
+@click.option('--num_seeds', type=int, default=0, help="number of derived seeds (0 = use master_seed directly)")
+def experiment(exp_name, output_dir, output_filename, n, iterations, prob, master_seed, num_seeds):
+
+    N = n  # click doesn't accept upper case arguments
+
+    # make sure N>1
+    if N < 2:
+        raise ValueError('N must be greater than 1')
+
+    # determine seeds to use
+    if num_seeds <= 0:
+        # single-seed mode: use master_seed directly
+        seeds = [master_seed]
+    else:
+        # multi-seed mode: derive seeds from master_seed
+        master_rng = np.random.default_rng(seed=master_seed)
+        seeds = master_rng.integers(low=0, high=2**32-1, size=num_seeds)
+
+    # collect seed results
+    seed_results = []
+    for seed in seeds:
+        # initialize the random number generator
+        rng = np.random.default_rng(seed=seed)
+        # run the experiment
+        result = single_seed_experiment(rng, N, iterations, prob)
+        result['seed'] = int(seed)
+        seed_results.append(result)
+
+    # build flat output structure
+    output = {
+        'exp_name': exp_name,
+        'N': N,
+        'iterations': iterations,
+        'prob': prob,
+        'master_seed': master_seed,
+        'num_seeds': num_seeds,
+        'seed_results': seed_results
     }
 
     print('Converting to native Python types...')
-    # convert all values in summary to native Python types
-    summary = convert_to_native(summary)
+    output = convert_to_native(output)
 
     print('Saving results...')
-    # include the variable parameters into the filename
-    filename = f'{exp_name}__' + '__'.join([f'{key}={summary["parameters"][key]}' for key in vars.split(',')]) + '.json'
-    with open(f'{output_dir}/{filename}', 'w') as f:
-        json.dump(summary, f)
+    with open(f'{output_dir}/{output_filename}', 'w') as f:
+        json.dump(output, f, indent=2)
 
     print('Done!')
 

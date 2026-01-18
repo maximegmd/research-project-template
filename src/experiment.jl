@@ -3,44 +3,56 @@ using JSON
 using Statistics
 using ArgParse
 
-function compute(N, prob)
+# FIX: Pass rng to compute function to use seeded randomness
+function compute(N, prob, rng)
 
     votes = zeros(Int, N)
     abstained = 0
-    
+
     for i in 1:N
-        if rand() < prob
+        if rand(rng) < prob
             abstained += 1
         else
             eligible = collect(setdiff(1:N, [i]))
-            votes[rand(eligible)] += 1
-        end 
+            votes[rand(rng, eligible)] += 1
+        end
     end
 
     return votes, abstained
 end
 
-function summarize(votes, abstained)
-    sorted_votes = sortperm(votes)
-    winner = sorted_votes[end]
-    winner_votes = votes[winner]
-    runner_up = sorted_votes[end-1]
-    diff = winner_votes - votes[runner_up]
-    votes_zeroone = votes[1:2]
-    return winner, winner_votes, diff, votes_zeroone
+# run the experiment for a single seed
+function single_seed_experiment(rng, N, iterations, prob)
+
+    # initialize results arrays
+    abstained_results = zeros(Int, iterations)
+    winner_results = zeros(Int, iterations)
+
+    println("Computing...")
+    for i in 1:iterations
+        # perform computation (now passing rng)
+        votes, abstained = compute(N, prob, rng)
+
+        # save the results
+        abstained_results[i] = abstained
+        winner_results[i] = argmax(votes)
+    end
+
+    # perform aggregation
+    avg_num_abstained = mean(abstained_results)
+    num_of_wins = zeros(Int, N)
+    for val in winner_results
+        num_of_wins[val] += 1
+    end
+    most_common_winner = argmax(num_of_wins)
+
+    return Dict(
+        "avg_num_abstained" => avg_num_abstained,
+        "most_common_winner" => most_common_winner
+    )
 end
 
-
 function experiment(args)
-
-    # comment out the parsing for testing and set the arguments manually
-    # exp_name = "test"
-    # output_dir = "outputs"
-    # vars = "N,prob,seed"
-    # N = 10
-    # iterations = 10
-    # prob = 0.5
-    # seed = 42
 
     # parse the command line arguments
     s = ArgParseSettings()
@@ -53,8 +65,8 @@ function experiment(args)
             help="Output directory"
             required=true
             arg_type=String
-        "--vars"
-            help="Variable parameters (e.g. 'N,prob,seed')"
+        "--output_filename"
+            help="Output filename"
             required=true
             arg_type=String
         "--N"
@@ -70,10 +82,15 @@ function experiment(args)
             required=false
             default=0.1
             arg_type=Float64
-        "--seed"
-            help="Random seed"
+        "--master_seed"
+            help="The master seed for generating seeds"
             required=false
             default=42
+            arg_type=Int
+        "--num_seeds"
+            help="Number of derived seeds (0 = use master_seed directly)"
+            required=false
+            default=0
             arg_type=Int
     end
 
@@ -81,78 +98,53 @@ function experiment(args)
     parsed_args = parse_args(args, s)
     exp_name = parsed_args["exp_name"]
     output_dir = parsed_args["output_dir"]
-    vars = parsed_args["vars"]
+    output_filename = parsed_args["output_filename"]
     N = parsed_args["N"]
     iterations = parsed_args["iterations"]
     prob = parsed_args["prob"]
-    seed = parsed_args["seed"]
+    master_seed = parsed_args["master_seed"]
+    num_seeds = parsed_args["num_seeds"]
 
     # make sure N>1
     if N < 2
         error("N must be greater than 1")
     end
 
-    # set the random seed
-    Random.seed!(seed)
-    
-    # initialize parameters in a dictionary
-    parameters = Dict("N" => N,
-                      "iterations" => iterations,
-                      "prob" => prob,
-                      "seed" => seed)
-
-    # initialize iteration results in a separate dictionary (do not merge with parameters yet)
-    iteration_results = Dict(
-        "winner" => zeros(Int, iterations),
-        "winner_votes" => zeros(Int, iterations),
-        "diff" => zeros(Int, iterations),
-        "abstained" => zeros(Int, iterations),
-        "votes_zeroone" => zeros(Int, iterations, 2)
-    )
-
-    println("Computing...")
-    for i in 1:iterations
-
-        # perform computation
-        votes, abstained = compute(N, prob)
-
-        # summarize the quantities of interest
-        w, wv, d, vz = summarize(votes, abstained)
-
-        # save the iteration results
-        iteration_results["winner"][i] = w
-        iteration_results["winner_votes"][i] = wv
-        iteration_results["diff"][i] = d
-        iteration_results["abstained"][i] = abstained
-        iteration_results["votes_zeroone"][i, :] = vz
+    # determine seeds to use
+    if num_seeds <= 0
+        # single-seed mode: use master_seed directly
+        seeds = [master_seed]
+    else
+        # multi-seed mode: derive seeds from master_seed
+        master_rng = Random.Xoshiro(master_seed)
+        seeds = rand(master_rng, UInt32, num_seeds)
     end
 
-    # perform some aggregation
-    avg_num_abstained = mean(iteration_results["abstained"])
-    num_of_wins = zeros(Int, N)
-    for val in iteration_results["winner"]
-        num_of_wins[val] += 1
+    # collect seed results
+    seed_results = []
+    for seed in seeds
+        # initialize the random number generator
+        rng = Xoshiro(seed)
+        # run the experiment
+        result = single_seed_experiment(rng, N, iterations, prob)
+        result["seed"] = Int(seed)
+        push!(seed_results, result)
     end
-    most_common_winner = argmax(num_of_wins)
 
-    # save the aggregated results in a separate dictionary
-    total_results = Dict(
-        "avg_num_abstained" => avg_num_abstained,
-        "most_common_winner" => most_common_winner,
-    )
-    
-    # merge the parameters, iteration results, and total results into a single summary dictionary
-    summary = Dict(
-        "parameters" => parameters,
-        "iteration_results" => iteration_results,
-        "total_results" => total_results
+    # build flat output structure
+    output = Dict(
+        "exp_name" => exp_name,
+        "N" => N,
+        "iterations" => iterations,
+        "prob" => prob,
+        "master_seed" => master_seed,
+        "num_seeds" => num_seeds,
+        "seed_results" => seed_results
     )
 
     println("Saving results...")
-    # include the variable parameters into the filename
-    filename = string(exp_name, "__", join([string(k, "=", summary["parameters"][k]) for k in split(vars, ",")], "__"), ".json")
-    open(joinpath(output_dir, filename), "w") do f
-        write(f, JSON.json(summary))
+    open(joinpath(output_dir, output_filename), "w") do f
+        write(f, JSON.json(output, 2))
     end
 
     println("Done!")

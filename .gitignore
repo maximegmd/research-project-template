@@ -141,6 +141,8 @@ cython_debug/
 outputs/**/*json
 outputs/slurm_logs/*out
 outputs/slurm_logs/*err
+outputs/logs/*out
+outputs/logs/*err
 
 # Ignore the figures
 figures/*pdf
