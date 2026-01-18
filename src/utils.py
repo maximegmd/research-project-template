@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import matplotlib
-import numpy as np
 
 def get_fig_dim(width, fraction=1, aspect_ratio=None):
     """Set figure dimensions to avoid scaling in LaTeX.
@@ -39,7 +38,7 @@ def get_fig_dim(width, fraction=1, aspect_ratio=None):
     return fig_dim
 
 
-def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, small_font_size=None, usetex=True):
+def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, small_font_size=None, usetex=True, use_defaults=False):
     """Set up matplotlib's RC params for LaTeX plotting.
     Call this before plotting a figure.
 
@@ -55,7 +54,14 @@ def latexify(font_serif='Computer Modern', mathtext_font='cm', font_size=10, sma
     	Set the small font size
     usetex: boolean, optional
         Use tex for strings
+    use_defaults: boolean, optional
+        If True, reset to matplotlib defaults and skip all rcParams updates
     """
+
+    if use_defaults:
+        matplotlib.rcParams.update(matplotlib.rcParamsDefault)
+        plt.rcParams.update(plt.rcParamsDefault)
+        return
 
     if small_font_size is None:
         small_font_size = font_size
