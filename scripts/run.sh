@@ -102,6 +102,15 @@ if [ ! -f "$CONFIG_FILE" ]; then
     exit 1
 fi
 
+# Set up Julia path for SLURM mode (compute nodes don't source .bashrc)
+if [ -n "$SLURM_ARRAY_TASK_ID" ] && [ "$EXPERIMENT_LANG" == "julia" ]; then
+    JULIA_PATH=$(jq -r '.slurm.julia_path // empty' "$CONFIG_FILE")
+    JULIA_PATH="${JULIA_PATH/#\~/$HOME}"  # Expand ~ to $HOME
+    if [ -n "$JULIA_PATH" ]; then
+        export PATH="$JULIA_PATH:$PATH"
+    fi
+fi
+
 # Determine source file
 if [ "$EXPERIMENT_LANG" == "python" ]; then
     SRC="${NAME}.py"

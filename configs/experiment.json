@@ -24,13 +24,14 @@
             "job_name": "Job name shown in squeue (--job-name)",
             "exclude": "Nodes to exclude (--exclude), leave empty for none",
             "constraint": "Node constraints (--constraint), leave empty for none",
-            "gres": "Generic resources like GPUs (--gres), e.g. 'gpu:1', leave empty for none"
+            "gres": "Generic resources like GPUs (--gres), e.g. 'gpu:1', leave empty for none",
+            "julia_path": "Path to Julia bin directory (e.g., '~/.juliaup/bin'). Needed for SLURM since compute nodes don't source .bashrc"
         },
         "cores": 1,
         "nodes": 1,
-        "time": "0-02:59",
+        "time": "0-00:30",
         "memory": "5G",
-        "partition": "",
+        "partition": "cpu-batch",
         "account": "",
         "email": "",
         "email_type": "FAIL",
@@ -38,6 +39,7 @@
         "job_name": "experiment",
         "exclude": "",
         "constraint": "",
-        "gres": ""
+        "gres": "",
+        "julia_path": "~/.juliaup/bin"
     }
 }
