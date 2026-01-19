@@ -2,8 +2,10 @@
     "_comments": {
         "_fixed_vs_variable": "Fixed params (scalars) are shared by all runs. Variable params (arrays) create a grid of combinations.",
         "master_seed": "Seed for reproducibility",
-        "num_seeds": "0 = use master_seed directly; N > 0 = derive N seeds from master_seed"
+        "num_seeds": "0 = use master_seed directly; N > 0 = derive N seeds from master_seed",
+        "exec_name": "Name of the script to run (without extension). The script is expected in src/"
     },
+    "exec_name": "experiment",
     "master_seed": 42,
     "num_seeds": 0,
     "iterations": 10,

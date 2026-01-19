@@ -6,7 +6,7 @@ import subprocess
 
 # Reserved keys (not experiment parameters)
 # Keys starting with '_' are also excluded (used for comments/metadata)
-RESERVED_KEYS = {'slurm'}
+RESERVED_KEYS = {'slurm', 'exec_name'}
 
 def is_reserved(key):
     return key in RESERVED_KEYS or key.startswith('_')

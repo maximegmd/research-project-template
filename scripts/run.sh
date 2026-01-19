@@ -111,11 +111,12 @@ if [ -n "$SLURM_ARRAY_TASK_ID" ] && [ "$EXPERIMENT_LANG" == "julia" ]; then
     fi
 fi
 
-# Determine source file
+# Determine source file from config's executable field
+SCRIPT_NAME=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['exec_name'])")
 if [ "$EXPERIMENT_LANG" == "python" ]; then
-    SRC="${NAME}.py"
+    SRC="${SCRIPT_NAME}.py"
 elif [ "$EXPERIMENT_LANG" == "julia" ]; then
-    SRC="${NAME}.jl"
+    SRC="${SCRIPT_NAME}.jl"
 fi
 
 if [ -n "$SLURM_ARRAY_TASK_ID" ]; then
