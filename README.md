@@ -87,6 +87,7 @@ or equivalently
 ### Configuration
 
 Experiments are configured via JSON files in `configs/`. Each config file specifies:
+- **Executable script**: The name of the Python/Julia script in `src/` to run
 - **Experiment parameters**: Fixed values (e.g., `"iterations": 10`) or arrays for the variables of interest of the experiment (e.g., `"N": [10, 20]`)
 - **SLURM settings**: Resource requirements for execution on compute clusters (see `_comments` in the `slurm` section for parameter descriptions) --- these are simply ignored if the experiment is executed locally.
 
@@ -108,13 +109,12 @@ To run all parameter combinations locally:
 By default, this runs `configs/experiment.json` using Python.
 
 **Options:**
-- `-n, --name NAME` — Experiment name (required). It tells the executor to look for the config `configs/NAME.json` and the Python/Julia script called `src/NAME.{py,jl}`
+- `-n, --name NAME` — Experiment name (required). It tells the executor to look for the config `configs/NAME.json` and the python/julia script uses that name as a prefix for output files.
 - `-l, --lang LANG` — Language: `python` or `julia` (default: `python`)
 - `-h, --help` — Show help message
 
 **Examples:**
 ```bash
-
 # Use Julia instead of Python
 ./scripts/run.sh -n experiment -l julia
 
