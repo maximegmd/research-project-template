@@ -86,9 +86,9 @@ or equivalently
 
 ### Configuration
 
-Experiments are configured via JSON files in `configs/`. Each config file specifies:
-- **Executable script**: The name of the Python/Julia script in `src/` to run
-- **Experiment parameters**: Fixed values (e.g., `"iterations": 10`) or arrays for the variables of interest of the experiment (e.g., `"N": [10, 20]`)
+Experiments are configured via JSON files in `configs/`. Each config file has three sections:
+- **Experiment parameters** (top-level): Fixed values (e.g., `"iterations": 10`) or arrays for variables (e.g., `"N": [10, 20]`) that are the main parameters passed to the Python/Julia script
+- **Executor settings** (`executor`): Values that specify the name of the Python/Julia script to run, the output directory, and the logging directory
 - **SLURM settings**: Resource requirements for execution on compute clusters (see `_comments` in the `slurm` section for parameter descriptions) --- these are simply ignored if the experiment is executed locally.
 
 ### How it works
@@ -152,11 +152,11 @@ To submit experiments as a SLURM array job:
 ./scripts/submit_slurm.sh -n my_other_experiment
 ```
 
-Monitor jobs with `squeue -u $USER` and check logs in the `log_dir` specified in your config (default: `outputs/slurm_logs`).
+Monitor jobs with `squeue -u $USER` and check logs in the `slurm.log_dir` specified in your config (default: `outputs/slurm_logs`).
 
 ### Output
 
-Results are saved to the `output_dir` specified in the config (default: `outputs/`). Output filenames are auto-generated from variable parameters:
+Results are saved to the `output_dir` specified in the config (default: `outputs/`). Executor logs are saved to `log_dir` (default: `outputs/logs`). Output filenames are auto-generated from variable parameters:
 
 ```
 {exp_name}__{param1}={value1}__{param2}={value2}.json

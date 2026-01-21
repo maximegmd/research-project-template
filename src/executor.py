@@ -6,7 +6,7 @@ import subprocess
 
 # Reserved keys (not experiment parameters)
 # Keys starting with '_' are also excluded (used for comments/metadata)
-RESERVED_KEYS = {'slurm', 'exec_name'}
+RESERVED_KEYS = {'executor', 'slurm'}
 
 def is_reserved(key):
     return key in RESERVED_KEYS or key.startswith('_')
@@ -44,6 +44,11 @@ def experiment(config, name, index, lang, source):
     # inject exp_name from CLI argument
     experiment_params['exp_name'] = name
 
+    # inject output_dir from executor config (with default)
+    executor_config = config_data.get('executor', {})
+    if 'output_dir' not in experiment_params:
+        experiment_params['output_dir'] = executor_config.get('output_dir', 'outputs')
+
     # auto-generate filename from variable params
     exp_name = name
     var_parts = [f"{k}={experiment_params[k]}" for k in variable_params.keys()]
@@ -64,8 +69,8 @@ def experiment(config, name, index, lang, source):
     elif lang == 'julia':
         command = f'julia --project=. src/{source} {args}'
 
-    # create log directory
-    log_dir = experiment_params.get('output_dir', 'outputs') + '/logs'
+    # create log directory (from executor config)
+    log_dir = executor_config.get('log_dir', 'outputs/logs')
     os.makedirs(log_dir, exist_ok=True)
 
     # log files named to match JSON output

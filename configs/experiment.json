@@ -1,17 +1,19 @@
 {
-    "_comments": {
-        "_fixed_vs_variable": "Fixed params (scalars) are shared by all runs. Variable params (arrays) create a grid of combinations.",
-        "master_seed": "Seed for reproducibility",
-        "num_seeds": "0 = use master_seed directly; N > 0 = derive N seeds from master_seed",
-        "exec_name": "Name of the script to run (without extension). The script is expected in src/"
-    },
-    "exec_name": "experiment",
     "master_seed": 42,
     "num_seeds": 0,
     "iterations": 10,
-    "output_dir": "outputs",
     "N": [10, 20],
     "prob": [0.1, 0.5],
+    "executor": {
+        "_comments": {
+            "exec_name": "Name of the script to run (without extension). The script is expected in src/",
+            "output_dir": "Directory for experiment results (default: outputs/)",
+            "log_dir": "Directory for executor stdout/stderr logs (default: outputs/logs)"
+        },
+        "exec_name": "experiment",
+        "output_dir": "outputs",
+        "log_dir": "outputs/logs"
+    },
     "slurm": {
         "_comments": {
             "cores": "CPUs per task (--cpus-per-task)",
@@ -22,7 +24,7 @@
             "account": "Account/project for billing (--account), leave empty if not required",
             "email": "Email for notifications (--mail-user), leave empty to disable",
             "email_type": "When to email: NONE, BEGIN, END, FAIL, ALL (--mail-type)",
-            "log_dir": "Directory for stdout/stderr logs",
+            "log_dir": "Directory for SLURM stdout/stderr logs (default: outputs/slurm_logs)",
             "job_name": "Job name shown in squeue (--job-name)",
             "exclude": "Nodes to exclude (--exclude), leave empty for none",
             "constraint": "Node constraints (--constraint), leave empty for none",
