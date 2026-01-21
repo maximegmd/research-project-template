@@ -59,9 +59,11 @@ def single_seed_experiment(rng, N, iterations, prob):
 
 # comment the click commands for testing
 @click.command()
+# the first three options are specified by the executor
 @click.option('--exp_name', type=str, required=True, help="name of the experiment")
 @click.option('--output_dir', type=str, required=True, help="output directory")
 @click.option('--output_filename', type=str, required=True, help="output filename")
+# the rest are experiment-specific
 @click.option('--N', type=int, required=True, help="number of voters")
 @click.option('--iterations', type=int, required=True, help="rounds of voting")
 @click.option('--prob', type=float, default=0.1, help="probability of abstaining")

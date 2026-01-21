@@ -57,6 +57,7 @@ function experiment(args)
     # parse the command line arguments
     s = ArgParseSettings()
     @add_arg_table! s begin
+        # the first three options are specified by the executor
         "--exp_name"
             help="Name of the experiment"
             required=true
@@ -69,6 +70,7 @@ function experiment(args)
             help="Output filename"
             required=true
             arg_type=String
+        # the rest are experiment-specific
         "--N"
             help="Number of voters"
             required=true
