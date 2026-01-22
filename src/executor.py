@@ -50,8 +50,10 @@ def experiment(config, name, index, lang, source):
         experiment_params['output_dir'] = executor_config.get('output_dir', 'outputs')
 
     # auto-generate filename from variable params
+    # NOTE: sometimes a parameter value (e.g., a HF model name) may contain "/"
+    # replace such characters with "_" to ensure no directory issues arise
     exp_name = name
-    var_parts = [f"{k}={experiment_params[k]}" for k in variable_params.keys()]
+    var_parts = [f"{k}={experiment_params[k]}".replace("/", "_") for k in variable_params.keys()]
     output_filename = f"{exp_name}__{'__'.join(var_parts)}.json"
 
     # create args string
