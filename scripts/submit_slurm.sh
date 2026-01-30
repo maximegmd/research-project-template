@@ -12,19 +12,17 @@ Submit experiments as a SLURM array job.
 Options:
   -n, --name NAME       Experiment name (required)
                         Config file is derived as configs/NAME.json
-  -l, --lang LANG       Language: python or julia (default: python)
   -d, --dry-run         Show sbatch command without executing
   -h, --help            Show this help message
 
 Environment variables:
-  NAME, EXPERIMENT_LANG are also supported.
+  NAME is also supported.
   Command-line arguments take precedence over environment variables.
 
 SLURM settings are read from the 'slurm' section of the config file.
 
 Examples:
   submit_slurm.sh -n experiment           # Submit experiment
-  submit_slurm.sh -n my_exp -l julia      # Julia experiment
   submit_slurm.sh -n experiment --dry-run # Preview command
 EOF
 }
@@ -40,14 +38,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --name=*)
             ARG_NAME="${1#*=}"
-            shift
-            ;;
-        -l|--lang)
-            ARG_LANG="$2"
-            shift 2
-            ;;
-        --lang=*)
-            ARG_LANG="${1#*=}"
             shift
             ;;
         -d|--dry-run)
@@ -84,14 +74,7 @@ fi
 source env/bin/activate
 
 # Set configuration variables
-EXPERIMENT_LANG="${ARG_LANG:-${EXPERIMENT_LANG:-python}}"
 CONFIG_FILE="configs/${NAME}.json"
-
-# Validate language
-if [[ ! "$EXPERIMENT_LANG" =~ ^(python|julia)$ ]]; then
-    echo "Error: Invalid language '$EXPERIMENT_LANG'. Use 'python' or 'julia'." >&2
-    exit 1
-fi
 
 # Validate config file exists
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -142,7 +125,7 @@ SBATCH_CMD+=" --error=$SLURM_LOG_DIR/%A_%a.err"
 [ -n "$SLURM_CONSTRAINT" ] && SBATCH_CMD+=" --constraint=$SLURM_CONSTRAINT"
 [ -n "$SLURM_EXCLUDE" ] && SBATCH_CMD+=" --exclude=$SLURM_EXCLUDE"
 
-SBATCH_CMD+=" --export=ALL,EXPERIMENT_LANG=$EXPERIMENT_LANG,NAME=$NAME"
+SBATCH_CMD+=" --export=ALL,NAME=$NAME"
 SBATCH_CMD+=" scripts/run.sh"
 
 echo "Submitting $PARAM_COMBINATIONS jobs..."

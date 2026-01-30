@@ -6,3 +6,6 @@ click
 pandas
 scipy
 torch
+datasets
+huggingface_hub
+trl

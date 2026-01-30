@@ -72,7 +72,7 @@ if [ -z "$SLURM_ARRAY_TASK_ID" ]; then
     fi
 fi
 
-source env/bin/activate
+source .venv/bin/activate
 
 # Set configuration variables
 if [ -n "$SLURM_ARRAY_TASK_ID" ]; then
@@ -90,38 +90,19 @@ else
 fi
 CONFIG_FILE="configs/${NAME}.json"
 
-# Validate language
-if [[ ! "$EXPERIMENT_LANG" =~ ^(python|julia)$ ]]; then
-    echo "Error: Invalid language '$EXPERIMENT_LANG'. Use 'python' or 'julia'." >&2
-    exit 1
-fi
-
 # Validate config file exists
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Error: Config file not found: $CONFIG_FILE" >&2
     exit 1
 fi
 
-# Set up Julia path for SLURM mode (compute nodes don't source .bashrc)
-if [ -n "$SLURM_ARRAY_TASK_ID" ] && [ "$EXPERIMENT_LANG" == "julia" ]; then
-    JULIA_PATH=$(jq -r '.slurm.julia_path // empty' "$CONFIG_FILE")
-    JULIA_PATH="${JULIA_PATH/#\~/$HOME}"  # Expand ~ to $HOME
-    if [ -n "$JULIA_PATH" ]; then
-        export PATH="$JULIA_PATH:$PATH"
-    fi
-fi
-
 # Determine source file from config's executable field
 SCRIPT_NAME=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('executor', {}).get('exec_name', 'experiment'))")
-if [ "$EXPERIMENT_LANG" == "python" ]; then
-    SRC="${SCRIPT_NAME}.py"
-elif [ "$EXPERIMENT_LANG" == "julia" ]; then
-    SRC="${SCRIPT_NAME}.jl"
-fi
+SRC="${SCRIPT_NAME}.py"
 
 if [ -n "$SLURM_ARRAY_TASK_ID" ]; then
     # SLURM worker mode: run single experiment
-    python src/executor.py --config="$CONFIG_FILE" --name="$NAME" --index="$SLURM_ARRAY_TASK_ID" --lang="$EXPERIMENT_LANG" --source="$SRC"
+    python src/executor.py --config="$CONFIG_FILE" --name="$NAME" --index="$SLURM_ARRAY_TASK_ID" --source="$SRC"
 else
     # Local mode: loop through all combinations
     PARAM_COMBINATIONS=$(jq -r '
@@ -134,7 +115,7 @@ else
     echo "Running $PARAM_COMBINATIONS experiments locally..."
     for INDEX in $(seq 0 $((PARAM_COMBINATIONS - 1))); do
         echo "[$((INDEX + 1))/$PARAM_COMBINATIONS]"
-        python src/executor.py --config="$CONFIG_FILE" --name="$NAME" --index="$INDEX" --lang="$EXPERIMENT_LANG" --source="$SRC"
+        python src/executor.py --config="$CONFIG_FILE" --name="$NAME" --index="$INDEX" --source="$SRC"
     done
 fi
 

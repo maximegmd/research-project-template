@@ -67,9 +67,10 @@ def single_seed_experiment(rng, N, iterations, prob):
 @click.option('--N', type=int, required=True, help="number of voters")
 @click.option('--iterations', type=int, required=True, help="rounds of voting")
 @click.option('--prob', type=float, default=0.1, help="probability of abstaining")
+@click.option('--jepa', type=bool, default=False, help="whether to use JEPA")
 @click.option('--master_seed', type=int, default=42, help="the master seed for generating seeds")
 @click.option('--num_seeds', type=int, default=0, help="number of derived seeds (0 = use master_seed directly)")
-def experiment(exp_name, output_dir, output_filename, n, iterations, prob, master_seed, num_seeds):
+def experiment(exp_name, output_dir, output_filename, n, iterations, prob, jepa, master_seed, num_seeds):
 
     N = n  # click doesn't accept upper case arguments
 

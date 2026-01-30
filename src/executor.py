@@ -16,9 +16,8 @@ def is_reserved(key):
 @click.option('--config', type=str, required=True, help="path to config JSON file")
 @click.option('--name', type=str, required=True, help="experiment name")
 @click.option('--index', type=int, required=True, help="index of the parameter set")
-@click.option('--lang', type=str, default='python', help="language to use for the experiment")
 @click.option('--source', type=str, default='experiment.py', help="name of the source file")
-def experiment(config, name, index, lang, source):
+def experiment(config, name, index, source):
 
     # load the config file
     with open(config, "r") as f:
@@ -58,18 +57,12 @@ def experiment(config, name, index, lang, source):
 
     # create args string
     args = ' '.join([f'--{k} "{v}"' for k, v in experiment_params.items()])
-    # check that the lang is either python or julia
-    if lang not in ['python', 'julia']:
-        raise ValueError(f"Language {lang} is not supported. Supported languages are python and julia.")
 
     # pass the output filename to the command
     args += f' --output_filename "{output_filename}"'
 
     # create the command
-    if lang == 'python':
-        command = f'python src/{source} {args}'
-    elif lang == 'julia':
-        command = f'julia --project=. src/{source} {args}'
+    command = f'python src/{source} {args}'
 
     # create log directory (from executor config)
     log_dir = executor_config.get('log_dir', 'outputs/logs')
